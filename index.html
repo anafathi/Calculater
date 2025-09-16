@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title> Calculator — Tailwind + JS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-400 to-purple-400 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+    <div class="bg-white rounded-3xl shadow-2xl p-6">
+      <h1 class="text-center text-3xl font-bold mb-6 text-indigo-700">2-Color Calculator</h1>
+
+      <div class="bg-gray-100 rounded-xl p-3 mb-5 shadow-inner">
+        <input id="display" class="w-full text-right text-4xl font-mono bg-transparent outline-none text-indigo-900" type="text" value="0" readonly />
+      </div>
+
+      <div class="grid grid-cols-4 gap-4">
+        <!-- Numbers (color 1: Indigo) -->
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="7">7</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="8">8</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="9">9</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="/">÷</button>
+
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="4">4</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="5">5</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="6">6</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="*">×</button>
+
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="1">1</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="2">2</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="3">3</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="-">−</button>
+
+        <button class="col-span-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="0">0</button>
+        <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value=".">.</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-value="+">+</button>
+
+        <!-- Actions (color 2: Purple/Red for variety) -->
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-action="clear">AC</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-action="back">⌫</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-action="percent">%</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-lg shadow-md transition transform hover:scale-105" data-action="equals">=</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const display = document.getElementById('display');
+      let current = '';
+
+      function updateDisplay(v){ display.value = v === '' ? '0' : v; }
+      function append(value){
+        if (current === '0' && value === '0') return;
+        const parts = current.split(/[+\-*/%]/);
+        const last = parts[parts.length-1];
+        if (value === '.' && last.includes('.')) return;
+        current += value; updateDisplay(current);
+      }
+      function backspace(){ current = current.slice(0, -1); updateDisplay(current); }
+      function clearAll(){ current = ''; updateDisplay(current); }
+      function percent(){ if (!current) return; const match = current.match(/(\d*\.?\d+)$/); if(match){ const num = parseFloat(match[1]); current = current.slice(0,-match[1].length)+(num/100).toString(); updateDisplay(current); } }
+      function safeEval(expr){ if(!/^[0-9+\-*/().%\s]+$/.test(expr)) throw new Error('Invalid'); expr=expr.replace(/--/g,'+'); return Function('return('+expr+')')(); }
+      function calculate(){ if(!current) return; try{ current=String(safeEval(current)); updateDisplay(current); }catch(e){ updateDisplay('Error'); current=''; } }
+
+      document.querySelectorAll('[data-value]').forEach(btn=>btn.addEventListener('click',()=>append(btn.getAttribute('data-value'))));
+      document.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click',()=>{
+        const a = btn.getAttribute('data-action'); if(a==='clear') clearAll(); if(a==='back') backspace(); if(a==='percent') percent(); if(a==='equals') calculate();
+      }));
+      window.addEventListener('keydown',(e)=>{
+        if((e.key>='0'&&e.key<='9')||['+','-','*','/','(',')','.'].includes(e.key)){ append(e.key); e.preventDefault(); return; }
+        if(e.key==='Enter'){ calculate(); e.preventDefault(); }
+        if(e.key==='Backspace'){ backspace(); e.preventDefault(); }
+        if(e.key==='Delete'){ clearAll(); e.preventDefault(); }
+      });
+      updateDisplay('0');
+    })();
+  </script>
+</body>
+</html>
